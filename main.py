@@ -1,14 +1,19 @@
-import pandas as pd
-from selenium import webdriver
 import multiprocessing
+import time
+import pandas as pd
 from selenium.webdriver.common.by import By
 from bs4 import BeautifulSoup
+from selenium import webdriver
+import yaml
 
+with open("configuration.yaml", "r") as file:
+    config = yaml.safe_load(file)
 
 def get_company_urls():
+    global new_df
     domain_url = []
     driver = webdriver.Chrome()
-    df = pd.read_csv("dataset/test_data_test.csv")
+    df = pd.read_csv(config["INPUT_PATH"])
     for comp in df["Name"]:
         company = comp.replace("&", "and")
         url = "https://www.google.com/search?q="+company
@@ -20,7 +25,7 @@ def get_company_urls():
 def get_company_names():
     comp_names = []
     driver = webdriver.Chrome()
-    df = pd.read_csv("dataset/test_data_test.csv")
+    df = pd.read_csv(config["INPUT_PATH"])
     for comp in df["Name"]:
         company = comp.replace("&", "and")
         url = "https://www.google.com/search?q="+company
@@ -30,11 +35,11 @@ def get_company_names():
 
     return comp_names
 
-def get_linkedin_handler():
+def get_linkedin_handler(urls):
     linkedin_handler = []
     driver = webdriver.Chrome()
     for link in urls:
-        driver.get(link)
+        driver.get(urls)
         soup = BeautifulSoup(driver.page_source, "html.parser")
         all_links = soup.find_all('a')
         found_link = [str(f_link.get('href')) for f_link in all_links]
@@ -46,7 +51,7 @@ def get_linkedin_handler():
             linkedin_handler.append("NA")
     return linkedin_handler
 
-def get_instagram_handler():
+def get_instagram_handler(urls):
     linkedin_handler = []
     driver = webdriver.Chrome()
     for link in urls:
@@ -62,7 +67,7 @@ def get_instagram_handler():
             linkedin_handler.append("NA")
     return linkedin_handler
 
-def get_youtube_handler():
+def get_youtube_handler(urls):
     youtube_handler = []
     driver = webdriver.Chrome()
     for link in urls:
@@ -78,7 +83,7 @@ def get_youtube_handler():
             youtube_handler.append("NA")
     return youtube_handler
 
-def get_twitter_handlert():
+def get_twitter_handlert(urls):
     twitter_handler = []
     driver = webdriver.Chrome()
     for link in urls:
@@ -94,7 +99,7 @@ def get_twitter_handlert():
             twitter_handler.append("NA")
     return twitter_handler
 
-def get_facebook_handler():
+def get_facebook_handler(urls):
     facebook_handler = []
     driver = webdriver.Chrome()
     for link in urls:
@@ -109,20 +114,24 @@ def get_facebook_handler():
         else:
             facebook_handler.append("NA")
     return facebook_handler
-def main(urls):
-    urls = urls
-    print(urls)
+def main():
+    # url = []
+    # url.append(urls)
+    # print(url)
+    # print(len(url))
+    url = get_company_urls()
     names = get_company_names()
     print(names)
-    linkedin_handler = get_linkedin_handler()
+    linkedin_handler = get_linkedin_handler(url)
     print(linkedin_handler)
-    twitter_handler = get_twitter_handlert()
+    print(len(linkedin_handler))
+    twitter_handler = get_twitter_handlert(url)
     print(twitter_handler)
-    facebook_handler = get_facebook_handler()
+    facebook_handler = get_facebook_handler(url)
     print(facebook_handler)
-    instagram_handler = get_instagram_handler()
+    instagram_handler = get_instagram_handler(url)
     print(instagram_handler)
-    youtube_handler = get_youtube_handler()
+    youtube_handler = get_youtube_handler(url)
     print(youtube_handler)
 
     results = {
@@ -134,11 +143,12 @@ def main(urls):
         "Instagram Handler": instagram_handler,
         "Youtube Handler": youtube_handler
     }
+    print(results)
     df = pd.DataFrame(results)
-    df.to_csv("output/results.csv", index=False)
+    df.to_csv(config["OUTPUT_PATH"]+"results.csv", index=False)
     print("Your File has been created please check your output folder.....")
 
 
 if __name__ == "__main__":
-    urls = get_company_urls()
-    main(urls)
+
+    main()
